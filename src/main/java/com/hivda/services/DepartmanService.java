@@ -25,6 +25,15 @@ public class DepartmanService {
         repository.save(departman);
     }
 
+    /**
+     * DİKKAT!
+     * Güncelleme ve Kaydet işlemleri repository'de save(T entity) şeklinde tanımlıdır.
+     * Peki güncellemeyi kayıt etmeden nasıl ayırt ediypruz?
+     * Bir ORM aracı kayıtları varlıklarla eşleştirirken ID'yi kullanır. Yani varlık-tabo ilişkisini ID ile kurar.
+     * Bu nedenle eğer kayıt ettiğiniz entity içinde id bilgisi null ise save metodu kayıt işlemi yapar.
+     * Eğer id bilgisi dolu ise güncelleme işlemi yapar.
+     */
+
     public List<Departman> findAll(){
         return repository.findAll();
     }
