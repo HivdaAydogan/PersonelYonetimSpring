@@ -1,15 +1,16 @@
 package com.hivda.controller;
 
-import com.hivda.constants.RestApiList;
+import com.hivda.dto.response.FindAllVwUserResponseDto;
+import com.hivda.dto.request.SavePersonelRequestDto;
+import com.hivda.mapper.IPersonelMapper;
 import com.hivda.repository.entity.Personel;
 import com.hivda.services.PersonelService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.hivda.constants.RestApiList.*;  // Mapping'de çağırırken RestApiList.PERSONEL diye çağırmamız gerekmez böylece.
@@ -86,9 +87,125 @@ public class PersonelController {
         personelService.save(personel);
     }
 
+    /**
+     * DİKKAT!
+     * Eğer DTO içinde validasyon yapıyor iseniz, mutlaka @Valid anatasyonunu kullanın.
+     * bu anotasyon olmaz ise validasyon kontrolü sağlanamaz. DTO için önüne @Valid anatasyonu eklenmelidir.
+     */
+    @PostMapping(SAVEDTO)
+    public ResponseEntity<Boolean> savePersonelDto(@RequestBody @Valid SavePersonelRequestDto dto){
+        Personel personel = Personel.builder()
+                .ad(dto.getAd())
+                .adres(dto.getAdres())
+                .telefon(dto.getTelefon())
+                .acildurumkisisi(dto.getAcildurumkisisi())
+                .acildurumtelefonu(dto.getAcildurumtelefonu())
+                .build();
+        personelService.save(personel);
+        return ResponseEntity.ok(true);
+    }
+
+    @PostMapping(SAVEDTOMAPPER)
+    public ResponseEntity<Boolean> savePersonelMapperDto(@RequestBody SavePersonelRequestDto dto){
+        Personel personel = IPersonelMapper.INSTANCE.personelFromDto(dto);
+        personelService.save(personel);
+        return ResponseEntity.ok(true);
+    }
+
+    /**
+     *      DİKKATT!!!!!
+     *      Controller Katmanı -> kullanıcı ile iletişime geçerek gerekli bilgilerin soğru bir şekilde service katmanına
+     *      iletilmesinden mesuldur.
+     *      Bu nedenle, Bu katmanda Dönüşüm, Nesne yaratma, farklı servisler ile birleştirilerek işlem yapma gibi işlemlerden
+     *      olabildiğince kaçınmak gereklidir.
+     *
+     */
+    @PostMapping(SAVEDTOMAPPER2)
+    public ResponseEntity<Boolean> savePersonelMapperDto2(@RequestBody @Valid SavePersonelRequestDto dto){
+        /**
+         * Kullanıcının yetkinliği kontrol edilebilir. Sisteme giriş yapıp yapamayacağo kontrol edilebilri. geçerl bir
+         * oturumu oluş olmadığı kontrol edilebilir.
+         */
+        return ResponseEntity.ok(personelService.saveFromDto(dto));
+    }
+
     @GetMapping(FINDALL)
     public ResponseEntity<List<Personel>> findAll(){
         return ResponseEntity.ok(personelService.findAll());
     }
+
+    /**
+     * Client ve Server arasındaki iletişimde performansı öncelemek istiyosanız ve ayrıca sunucu
+     * maliyetlerinin artmamamsını istiyorsanız iki bileşen arasındaki veri transferini minimuma indirmek
+     * için DTO(Data Transfer Object) kullanmalısınız.
+     *
+     * * @return
+     */
+
+    @GetMapping(FINALLVWUSER)
+    public ResponseEntity<List<FindAllVwUserResponseDto>> getAllVwPersonel(){
+        List<Personel> plist = personelService.findAll();
+        List<FindAllVwUserResponseDto> result = new ArrayList<>();
+        plist.forEach(p->{
+            FindAllVwUserResponseDto dto =  FindAllVwUserResponseDto.builder()
+                    .id(p.getId())
+                    .ad(p.getAd())
+                    .photo(p.getPhoto())
+                    .build();
+            result.add(dto);
+        });
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping(FINALLVWUSERMAPPER)
+    public ResponseEntity<List<FindAllVwUserResponseDto>> getAllVwPersonelMapper(){
+        List<Personel> plist = personelService.findAll();
+        List<FindAllVwUserResponseDto> result = new ArrayList<>();
+        plist.forEach(p->{
+            // FindAllVwUserResponseDto dto =  IPersonelMapper.INSTANCE.personelToDto(p);
+            // result.add(dto);
+            result.add(IPersonelMapper.INSTANCE.personelToDto(p));
+        });
+        return ResponseEntity.ok(result);
+    }
+
+
+
+    @GetMapping("/getUpperCaseName")
+    public ResponseEntity<String> getUpperCaseName(String ad){
+        String upperCaseName = ad.toUpperCase();
+        return ResponseEntity.ok(upperCaseName);
+    }
+
+    @PostMapping("/postUpperCaseName")
+    public ResponseEntity<String> postUpperCaseName(String ad){
+        String upperCaseName = ad.toUpperCase();
+        return ResponseEntity.ok(upperCaseName);
+    }
+
+    @PutMapping ("/putUpperCaseName")
+    public ResponseEntity<String> putUpperCaseName(String ad){
+        String upperCaseName = ad.toUpperCase();
+        return ResponseEntity.ok(upperCaseName);
+    }
+
+    @PatchMapping("/patchUpperCaseName")
+    public ResponseEntity<String> patchUpperCaseName(String ad){
+        String upperCaseName = ad.toUpperCase();
+        return ResponseEntity.ok(upperCaseName);
+    }
+
+    @DeleteMapping("/deleteUpperCaseName")
+    public ResponseEntity<String> deleteUpperCaseName(String ad){
+        String upperCaseName = ad.toUpperCase();
+        return ResponseEntity.ok(upperCaseName);
+    }
+
+    /**
+     * http metodları yukarıda da görüldüğü gibi birbirlerinin yerine kullanılabilir. Ancak bu istekleri ayrıştırmak
+     * için ayrı ayrı kullanıyoruz.
+     */
+
+
 
 }

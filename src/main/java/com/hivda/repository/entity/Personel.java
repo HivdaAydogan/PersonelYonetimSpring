@@ -21,12 +21,14 @@ public class Personel {
     String telefon;
     String photo;
     Integer yas;
+    String acildurumtelefonu;
+    String acildurumkisisi;
     Long giristarihi;
     /**
      * 0: Onaysız Kişi
      * 1: Personel
-     * 2:
-     * 3:
+     * 2: Yönetici
+     * 3: Admin
      */
     Integer type;
 
